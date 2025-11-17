@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @PageTitle("Empty")
-@Route("")
+@Route("empty")
 public class EmptyView extends VerticalLayout {
 
     private final UUID lisReg;

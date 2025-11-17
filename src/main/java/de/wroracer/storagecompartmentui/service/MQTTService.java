@@ -6,6 +6,7 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.ApplicationScope;
 
@@ -25,11 +26,11 @@ public class MQTTService {
 
     private final IMqttClient publisher;
     private List<MQTTMessage> messages = new ArrayList<>();
-    private HashMap<UUID, Consumer<String>> events = new HashMap<>();
+    private HashMap<UUID, Consumer<MQTTMessage>> events = new HashMap<>();
 
-    public MQTTService(){
+    public MQTTService(@Value("${mqtt.client.id}") String mqttClientId, @Value("${mqtt.server.url}") String mqttServerUrl){
         try {
-            publisher = new MqttClient("tcp://10.61.53.90:1883","felix-nb");
+            publisher = new MqttClient(mqttServerUrl,mqttClientId);
             publisher.connect();
             publisher.subscribe("#", (topic, msg) -> {
                 byte[] payload = msg.getPayload();
@@ -42,14 +43,14 @@ public class MQTTService {
                 message.setQos(msg.getQos());
                 message.setRecived(LocalDateTime.now());
                 messages.add(message);
-                events.values().forEach(c->c.accept(""));
+                events.values().forEach(c->c.accept(message));
             });
         } catch (MqttException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public UUID registerListener(Consumer<String> listener){
+    public UUID registerListener(Consumer<MQTTMessage> listener){
         UUID uuid = UUID.randomUUID();
         events.put(uuid,listener);
         return uuid;
@@ -69,6 +70,17 @@ public class MQTTService {
         msg.setRetained(true);
         try {
             publisher.publish("test/testTopicFelix",msg);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void publish(String msgS,String topic){
+        MqttMessage msg = new MqttMessage(msgS.getBytes(StandardCharsets.UTF_8));
+        msg.setQos(0);
+        msg.setRetained(true);
+        try {
+            publisher.publish(topic,msg);
         } catch (MqttException e) {
             throw new RuntimeException(e);
         }
