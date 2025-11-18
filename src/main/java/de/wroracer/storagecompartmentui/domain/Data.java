@@ -1,11 +1,10 @@
 package de.wroracer.storagecompartmentui.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class Data {
 
@@ -14,37 +13,49 @@ public class Data {
 
     private String formattedTime;
 
+    @JsonAlias("stored_boxes")
     private int boxes;
     private long temperature;
     private long humidity;
     private long pressure;
 
+    private long timeMs;
+    private long distance;
+
+    public long getTimeMs() {
+        return timeMs;
+    }
+
+    public void setTimeMs(long timeMs) {
+        this.timeMs = timeMs;
+    }
+
     public int getBoxes() {
         return boxes;
-    }
-
-    public long getHumidity() {
-        return humidity;
-    }
-
-    public long getPressure() {
-        return pressure;
-    }
-
-    public long getTemperature() {
-        return temperature;
     }
 
     public void setBoxes(int boxes) {
         this.boxes = boxes;
     }
 
+    public long getHumidity() {
+        return humidity;
+    }
+
     public void setHumidity(long humidity) {
         this.humidity = humidity;
     }
 
+    public long getPressure() {
+        return pressure;
+    }
+
     public void setPressure(long pressure) {
         this.pressure = pressure;
+    }
+
+    public long getTemperature() {
+        return temperature;
     }
 
     public void setTemperature(long temperature) {
@@ -59,10 +70,12 @@ public class Data {
         this.formattedTime = formattedTime;
     }
 
-    private long distance;
-
     public LocalDateTime getTime() {
         return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 
     public long getDistance() {
@@ -71,9 +84,5 @@ public class Data {
 
     public void setDistance(long distance) {
         this.distance = distance;
-    }
-
-    public void setTime(LocalDateTime time) {
-        this.time = time;
     }
 }

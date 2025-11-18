@@ -1,13 +1,11 @@
 package de.wroracer.storagecompartmentui.components.charts;
 
-import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.react.ReactAdapterComponent;
 import de.wroracer.storagecompartmentui.components.charts.domain.*;
 import elemental.json.Json;
-import elemental.json.JsonArray;
 import elemental.json.JsonObject;
 
 import java.util.ArrayList;
@@ -16,9 +14,10 @@ import java.util.List;
 @Tag("recharts-element")
 @JsModule("./src/react-charts.tsx")
 @NpmPackage(value = "recharts", version = "3.4.1")
-public class RechartsChart<T> extends ReactAdapterComponent implements HasSize {
+@NpmPackage(value = "moment", version = "2.30.1")
+public class RechartsChart<T> extends ReactAdapterComponent {
 
-    private final ChartConfig<T> conf = new ChartConfig<>(ChartType.LINE,new ArrayList<>(),new ArrayList<>());
+    private final ChartConfig<T> conf = new ChartConfig<>(ChartType.LINE, new ArrayList<>(), new ArrayList<>());
 
     private final JsonObject config = Json.createObject();
 
@@ -43,6 +42,11 @@ public class RechartsChart<T> extends ReactAdapterComponent implements HasSize {
     // --- Dimensions ---
     public void setHeight(int px) {
         conf.setHeight(px);
+        updateConfig();
+    }
+
+    public void setWidth(int width) {
+        conf.setWidth(width);
         updateConfig();
     }
 
@@ -77,13 +81,13 @@ public class RechartsChart<T> extends ReactAdapterComponent implements HasSize {
     }
 
     public void addLineSeries(String dataKey, String color) {
-        ChartSeries series = new ChartSeries(ChartType.LINE,dataKey,color,"none");
+        ChartSeries series = new ChartSeries(ChartType.LINE, dataKey, color, "none");
         conf.getSeries().add(series);
         updateConfig();
     }
 
     public void addBarSeries(String dataKey, String color) {
-        ChartSeries series = new ChartSeries(ChartType.BAR,dataKey,color,"none");
+        ChartSeries series = new ChartSeries(ChartType.BAR, dataKey, color, "none");
         conf.getSeries().add(series);
         updateConfig();
     }

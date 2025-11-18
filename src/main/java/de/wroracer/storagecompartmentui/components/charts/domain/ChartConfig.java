@@ -1,14 +1,13 @@
 package de.wroracer.storagecompartmentui.components.charts.domain;
 
 import java.util.List;
-import java.util.Map;
 
 // Klasse für ChartConfig
 public class ChartConfig<T> {
     private ChartType type;
     private List<T> data; // List of key-value pairs
-    private Integer width = 1500;   // optional
-    private Integer height = 800;  // optional
+    private Integer width = 200;   // optional
+    private Integer height = 100;  // optional
     private Boolean legend = false;  // optional
     private Boolean tooltip = false; // optional
     private Boolean grid = false;    // optional

@@ -18,6 +18,7 @@ import {
   XAxisProps,
   YAxisProps
 } from "recharts";
+import moment from 'moment'
 
 // ---------- Typen ----------
 export type ChartType = "LINE" | "BAR" | "PIE" | "AREA";
@@ -61,8 +62,8 @@ class RechartsElement extends ReactAdapterElement {
         }
       }
     }, []);*/
-    console.log("Config: "+config)
-    console.log("Series: "+config?.series)
+    console.log(config?.data)
+    console.log(moment('2025-11-18_09:34:16','yyyy-MM-dd_HH:mm:ss'))
 
   
 
@@ -101,12 +102,22 @@ class RechartsElement extends ReactAdapterElement {
       PIE: Pie
     };
 
+    const formattedDate = data.map((item: any) => ({
+      ...item,
+      time: moment(item.time,'YYYY-MM-DD_HH:mm:ss').valueOf()
+    }))
+    console.log(formattedDate)
+
     return (
       <div>
       <ResponsiveContainer width={width} height={height}>
-        <ChartComponent data={data}>
+        <ChartComponent data={formattedDate}>
           {grid && <CartesianGrid strokeDasharray="3 3" />}
-          <XAxis dataKey="formattedTime"></XAxis>
+          <XAxis   dataKey = 'time'
+        domain = {['auto', 'auto']}
+        name = 'Time'
+        tickFormatter = {(unixTime) => moment(unixTime).format('HH:mm:ss')}
+        type = 'number' ></XAxis>
           
           {yAxis && <YAxis {...yAxis} />}
           {tooltip && <Tooltip />}
