@@ -1,5 +1,8 @@
 package de.wroracer.storagecompartmentui.components.charts.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 // Klasse für ChartConfig
@@ -15,11 +18,32 @@ public class ChartConfig<T> {
     private YAxisProps yAxis; // optional
     private List<ChartSeries> series;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd_HH:mm:ss")
+    private LocalDateTime startDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd_HH:mm:ss")
+    private LocalDateTime endDate;
+
     // Konstruktor
     public ChartConfig(ChartType type, List<T> data, List<ChartSeries> series) {
         this.type = type;
         this.data = data;
         this.series = series;
+    }
+
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDateTime getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDateTime endDate) {
+        this.endDate = endDate;
     }
 
     // Getter und Setter

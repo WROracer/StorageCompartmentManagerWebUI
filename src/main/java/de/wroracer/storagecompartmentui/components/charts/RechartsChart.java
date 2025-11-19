@@ -8,6 +8,7 @@ import de.wroracer.storagecompartmentui.components.charts.domain.*;
 import elemental.json.Json;
 import elemental.json.JsonObject;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,12 @@ public class RechartsChart<T> extends ReactAdapterComponent {
 
     public void setWidth(int width) {
         conf.setWidth(width);
+        updateConfig();
+    }
+
+    public void setSpan(LocalDateTime start, LocalDateTime end) {
+        conf.setStartDate(start);
+        conf.setEndDate(end);
         updateConfig();
     }
 

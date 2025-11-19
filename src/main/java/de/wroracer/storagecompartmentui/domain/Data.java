@@ -20,7 +20,7 @@ public class Data {
     private long pressure;
 
     private long timeMs;
-    private long distance;
+    private Long distance;
 
     public long getTimeMs() {
         return timeMs;
@@ -78,11 +78,11 @@ public class Data {
         this.time = time;
     }
 
-    public long getDistance() {
+    public Long getDistance() {
         return distance;
     }
 
-    public void setDistance(long distance) {
+    public void setDistance(Long distance) {
         this.distance = distance;
     }
 }

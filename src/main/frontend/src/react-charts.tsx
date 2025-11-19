@@ -41,6 +41,8 @@ export interface ChartConfig {
   xAxis?: XAxisProps;
   yAxis?: YAxisProps;
   series: ChartSeries[];
+  startDate: string;
+  endDate: string;
 }
 
 // ---------- React-Komponente ----------
@@ -84,7 +86,9 @@ class RechartsElement extends ReactAdapterElement {
       grid,
       xAxis,
       yAxis,
-      series
+      series,
+      startDate,
+      endDate
     } = config;
 
     const ChartComponent =
@@ -107,6 +111,11 @@ class RechartsElement extends ReactAdapterElement {
       time: moment(item.time,'YYYY-MM-DD_HH:mm:ss').valueOf()
     }))
     console.log(formattedDate)
+    const formattedStartDate = moment(startDate,'YYYY-MM-DD_HH:mm:ss').valueOf()
+    const formattedEndDate = moment(endDate,'YYYY-MM-DD_HH:mm:ss').valueOf()
+
+    console.log(startDate)
+    console.log(endDate)
 
     return (
       <div>
@@ -114,10 +123,11 @@ class RechartsElement extends ReactAdapterElement {
         <ChartComponent data={formattedDate}>
           {grid && <CartesianGrid strokeDasharray="3 3" />}
           <XAxis   dataKey = 'time'
-        domain = {['auto', 'auto']}
+        domain = {[formattedStartDate, formattedEndDate]}
         name = 'Time'
-        tickFormatter = {(unixTime) => moment(unixTime).format('HH:mm:ss')}
-        type = 'number' ></XAxis>
+        tickFormatter = {(unixTime) => moment(unixTime).format('HH:mm DD.MM.YYYY')}
+        type = 'number' 
+        allowDataOverflow ></XAxis>
           
           {yAxis && <YAxis {...yAxis} />}
           {tooltip && <Tooltip />}

@@ -43,8 +43,20 @@ public class DataService {
     public DataService(MQTTService mqttService, ObjectMapper mapper, @Value("${mqtt.data.saveFolder}") String dataFolderStr) {
         this.mqttService = mqttService;
         this.mapper = mapper;
-        mqttService.registerListener(this::onMQTTMessage);
         dataFolder = Path.of(dataFolderStr);
+
+        mqttService.subscribe(SENSOR_DATA_TOPIC, (topic, msg) -> {
+            byte[] payload = msg.getPayload();
+            // ... payload handling omitted
+            String smsg = new String(payload);
+            System.out.println("Recived message: " + smsg + "; qos: " + msg.getQos());
+            MQTTMessage message = new MQTTMessage();
+            message.setTopic(topic);
+            message.setMsg(smsg);
+            message.setQos(msg.getQos());
+            message.setRecived(LocalDateTime.now());
+            onMQTTMessage(message);
+        });
     }
 
     private void onMQTTMessage(MQTTMessage msg) {
@@ -52,6 +64,7 @@ public class DataService {
         if (msg.getTopic().equals(SENSOR_DATA_TOPIC)) {
             try {
                 Data data = mapper.readValue(msg.getMsg(), Data.class);
+                data.setPressure(data.getPressure() / 100000);
                 List<Data> dtLst = loadData(msg.getTopic());
                 dtLst.add(data);
                 saveData(dtLst, msg.getTopic());
@@ -116,6 +129,9 @@ public class DataService {
         data.forEach(d -> {
             //d.setFormattedTime(d.getTime().format(DateTimeFormatter.ofPattern("hh:mm:ss dd.MM.yyyy")));
             d.setTimeMs(d.getTime().toEpochSecond(ZoneOffset.UTC));
+            if (d.getDistance() != null && d.getDistance() < 0) {
+                d.setDistance(null);
+            }
         });
         data.sort(new Comparator<Data>() {
             @Override
@@ -135,7 +151,7 @@ public class DataService {
 
     public void testData() {
         Data data = new Data();
-        data.setDistance(new Random().nextInt());
+        data.setDistance(new Random().nextLong());
         data.setTime(LocalDateTime.now());
         try {
             String json = mapper.writeValueAsString(data);
@@ -151,5 +167,14 @@ public class DataService {
 
     public List<Data> getSensorData() {
         return loadData(SENSOR_DATA_TOPIC);
+    }
+
+    public void lockDevice() {
+        //TODO
+        //mqttService.publish("LOCK","ERROR");
+    }
+
+    public boolean isMQQTConnected() {
+        return mqttService.isConnected();
     }
 }

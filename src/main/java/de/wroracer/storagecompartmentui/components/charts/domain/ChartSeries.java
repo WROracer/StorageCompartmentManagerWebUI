@@ -6,6 +6,7 @@ public class ChartSeries {
     private String dataKey;
     private String stroke; // optional
     private String fill;   // optional
+    private boolean isAnimationActive = false;
 
     // Konstruktor
     public ChartSeries(ChartType type, String dataKey, String stroke, String fill) {
@@ -13,6 +14,14 @@ public class ChartSeries {
         this.dataKey = dataKey;
         this.stroke = stroke;
         this.fill = fill;
+    }
+
+    public boolean isAnimationActive() {
+        return isAnimationActive;
+    }
+
+    public void setAnimationActive(boolean animationActive) {
+        isAnimationActive = animationActive;
     }
 
     // Getter und Setter
