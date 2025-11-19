@@ -129,7 +129,7 @@ class RechartsElement extends ReactAdapterElement {
         type = 'number' 
         allowDataOverflow ></XAxis>
           
-          {yAxis && <YAxis {...yAxis} />}
+          {yAxis && <YAxis padding={{ top: 5, bottom: 5 }} {...yAxis} />}
           {tooltip && <Tooltip formatter={(val,lbl)=>{
             var vf = val;
             if (lbl == "temperature"){

@@ -13,12 +13,20 @@ public class Data {
 
     @JsonAlias("stored_boxes")
     private Integer boxes;
-    private Long temperature;
-    private Long humidity;
+    private Double temperature;
+    private Double humidity;
     private Double pressure;
 
     private Long distance;
+    private Double height;
 
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
+    }
 
     public Integer getBoxes() {
         return boxes;
@@ -28,11 +36,11 @@ public class Data {
         this.boxes = boxes;
     }
 
-    public Long getHumidity() {
+    public Double getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(Long humidity) {
+    public void setHumidity(Double humidity) {
         this.humidity = humidity;
     }
 
@@ -44,11 +52,11 @@ public class Data {
         this.pressure = pressure;
     }
 
-    public Long getTemperature() {
+    public Double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Long temperature) {
+    public void setTemperature(Double temperature) {
         this.temperature = temperature;
     }
 

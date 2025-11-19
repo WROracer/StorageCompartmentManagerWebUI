@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Consumer;
 
 @Service
@@ -63,7 +62,17 @@ public class DataService {
         if (msg.getTopic().equals(SENSOR_DATA_TOPIC)) {
             try {
                 Data data = mapper.readValue(msg.getMsg(), Data.class);
+
+                double seaLevel = 1005;
+                double atmospheric = data.getPressure() / 100.0F;
+                double height = 44330.0 * (1.0 - Math.pow(atmospheric / seaLevel, 0.1903));
+                height = Math.round(height * 100) / 100d;
+                data.setHeight(height);
+
                 data.setPressure(data.getPressure() / 100000d);
+                data.setTemperature(Math.round(data.getTemperature() * 100) / 100d);
+                data.setHumidity(Math.round(data.getHumidity() * 100) / 100d);
+                data.setPressure(Math.round(data.getPressure() * 10000) / 10000d);
                 List<Data> dtLst = loadData(msg.getTopic());
 
                 dtLst.add(data);
@@ -140,22 +149,43 @@ public class DataService {
         });
     }
 
+    // Glättung der "Height"-Werte (inkl. letzter Wert eines gleichen Bereichs)
+    public static void smoothHeight(List<Data> dataList) {
+        if (dataList == null || dataList.size() < 2) return;
+
+        Double fistValue = dataList.getFirst().getHeight();
+        Double lastValue = dataList.getLast().getHeight();
+        Double currentValue = null;  // Wert, den wir aktuell glätten
+        int startIndex = -1;       // Startindex des Bereichs mit gleichen Werten
+
+        for (int i = 0; i < dataList.size(); i++) {
+            Double value = dataList.get(i).getHeight();
+
+            if (currentValue == null || !currentValue.equals(value)) {
+                // Wenn wir einen neuen Wert finden, speichern wir den Start des Bereichs
+                currentValue = value;
+                startIndex = i;
+            }
+
+            // Wenn wir das Ende des Bereichs erreicht haben (oder die Liste endet)
+            if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getHeight())) {
+                // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
+                if (i - startIndex > 1) {
+                    // Setze alle mittleren Werte und auch das letzte Element auf null
+                    for (int j = startIndex + 1; j <= i; j++) {
+                        dataList.get(j).setHeight(null);  // Setze den Wert auf null
+                    }
+                }
+            }
+        }
+        dataList.getFirst().setHeight(fistValue);
+        dataList.getLast().setHeight(lastValue);
+    }
+
     public List<String> getAllTypes() {
         try {
             return Files.list(dataFolder).map(f -> f.getFileName().toString().replace(".json", "")).toList();
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void testData() {
-        Data data = new Data();
-        data.setDistance(new Random().nextLong());
-        data.setTime(LocalDateTime.now());
-        try {
-            String json = mapper.writeValueAsString(data);
-            mqttService.publish(json, "sensors");
-        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -204,15 +234,17 @@ public class DataService {
         }
     }
 
-    // Glättung der "temperature"-Werte
+    // Glättung der "temperature"-Werte (inkl. letzter Wert eines gleichen Bereichs)
     public static void smoothTemperature(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
-        Long currentValue = null;  // Wert, den wir aktuell glätten
+        Double fistValue = dataList.getFirst().getTemperature();
+        Double lastValue = dataList.getLast().getTemperature();
+        Double currentValue = null;  // Wert, den wir aktuell glätten
         int startIndex = -1;       // Startindex des Bereichs mit gleichen Werten
 
         for (int i = 0; i < dataList.size(); i++) {
-            Long value = dataList.get(i).getTemperature();
+            Double value = dataList.get(i).getTemperature();
 
             if (currentValue == null || !currentValue.equals(value)) {
                 // Wenn wir einen neuen Wert finden, speichern wir den Start des Bereichs
@@ -224,23 +256,28 @@ public class DataService {
             if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getTemperature())) {
                 // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
                 if (i - startIndex > 1) {
-                    for (int j = startIndex + 1; j < i; j++) {
-                        dataList.get(j).setTemperature(null);  // Setze den mittleren Wert auf null
+                    // Setze alle mittleren Werte und auch das letzte Element auf null
+                    for (int j = startIndex + 1; j <= i; j++) {
+                        dataList.get(j).setTemperature(null);  // Setze den Wert auf null
                     }
                 }
             }
         }
+        dataList.getFirst().setTemperature(fistValue);
+        dataList.getLast().setTemperature(lastValue);
     }
 
     // Glättung der "humidity"-Werte
     public static void smoothHumidity(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
-        Long currentValue = null;  // Wert, den wir aktuell glätten
+        Double firstValue = dataList.getFirst().getHumidity();
+        Double lastValue = dataList.getLast().getHumidity();
+        Double currentValue = null;  // Wert, den wir aktuell glätten
         int startIndex = -1;       // Startindex des Bereichs mit gleichen Werten
 
         for (int i = 0; i < dataList.size(); i++) {
-            Long value = dataList.get(i).getHumidity();
+            Double value = dataList.get(i).getHumidity();
 
             if (currentValue == null || !currentValue.equals(value)) {
                 // Wenn wir einen neuen Wert finden, speichern wir den Start des Bereichs
@@ -252,18 +289,22 @@ public class DataService {
             if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getHumidity())) {
                 // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
                 if (i - startIndex > 1) {
-                    for (int j = startIndex + 1; j < i; j++) {
+                    for (int j = startIndex + 1; j <= i; j++) {
                         dataList.get(j).setHumidity(null);  // Setze den mittleren Wert auf null
                     }
                 }
             }
         }
+        dataList.getFirst().setHumidity(firstValue);
+        dataList.getLast().setHumidity(lastValue);
     }
 
     // Glättung der "pressure"-Werte
     public static void smoothPressure(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
+        Double fistValue = dataList.getFirst().getPressure();
+        Double lastValue = dataList.getLast().getPressure();
         Double currentValue = null;  // Wert, den wir aktuell glätten
         int startIndex = -1;         // Startindex des Bereichs mit gleichen Werten
 
@@ -280,16 +321,18 @@ public class DataService {
             if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getPressure())) {
                 // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
                 if (i - startIndex > 1) {
-                    for (int j = startIndex + 1; j < i; j++) {
+                    for (int j = startIndex + 1; j <= i; j++) {
                         dataList.get(j).setPressure(null);  // Setze den mittleren Wert auf null
                     }
                 }
             }
         }
+        dataList.getFirst().setPressure(fistValue);
+        dataList.getLast().setPressure(lastValue);
     }
 
     public void lockDevice() {
-        mqttService.publish("sensors/error", "ERROR");
+        mqttService.publish("ERROR", "sensor/error");
     }
 
     public boolean isMQQTConnected() {

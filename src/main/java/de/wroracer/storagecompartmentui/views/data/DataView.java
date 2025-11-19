@@ -19,7 +19,6 @@ import com.vaadin.flow.router.*;
 import com.vaadin.signals.ValueSignal;
 import de.wroracer.storagecompartmentui.components.charts.RechartsChart;
 import de.wroracer.storagecompartmentui.components.charts.domain.ChartType;
-import de.wroracer.storagecompartmentui.components.charts.domain.XAxisProps;
 import de.wroracer.storagecompartmentui.components.charts.domain.YAxisProps;
 import de.wroracer.storagecompartmentui.domain.Data;
 import de.wroracer.storagecompartmentui.service.DataService;
@@ -102,8 +101,10 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         btnLock.setIcon(VaadinIcon.LOCK.create());
 
         btnLock.addClickListener(c -> {
-            dataService.lockDevice();
-            Notification.show("Lock: alle Geräte wurden Gesperrt, sie übertragen keine neuen daten!!!!");
+            if (c.isFromClient()) {
+                dataService.lockDevice();
+                Notification.show("Lock: alle Geräte wurden Gesperrt, sie übertragen keine neuen daten!!!!");
+            }
         });
 
 
@@ -127,13 +128,6 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         add(hlHeader);
         add(layDisc);
         this.setSizeFull();
-
-        Button btnTest = new Button("Test");
-        btnTest.addClickListener(c -> {
-            dataService.testData();
-        });
-
-        //add(btnTest);
     }
 
     private void updateCharts(List<Data> _data) {
@@ -170,14 +164,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         chartAll.setType(ChartType.LINE);
 
 
-        /*chartAll.addLineSeries("distance", "green");*/
         chartAll.addLineSeries("boxes", "red");
-        /*chartAll.addLineSeries("temperature", "orange");*/
-        /*chartAll.addLineSeries("humidity", "blue");*/
-        /*chartAll.addLineSeries("pressure", "pink");*/
 
         chartAll.setGridVisible(true);
-        chartAll.setXAxis(new XAxisProps("formattedTime"));
         chartAll.setYAxis(new YAxisProps().setDomain(new String[]{"0", "2"}));
 
         chartAll.setWidth(810);
@@ -189,15 +178,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
 
-
-        /*chartAll.addLineSeries("distance", "green");*/
-        /*chartAll.addLineSeries("boxes", "red");*/
         chartAll.addLineSeries("temperature", "orange");
-        /*chartAll.addLineSeries("humidity", "blue");*/
-        /*chartAll.addLineSeries("pressure", "pink");*/
 
         chartAll.setGridVisible(true);
-        chartAll.setXAxis(new XAxisProps("formattedTime"));
         chartAll.setYAxis(new YAxisProps().setUnit("°C"));
 
         chartAll.setWidth(810);
@@ -210,14 +193,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         chartAll.setType(ChartType.LINE);
 
 
-        /*chartAll.addLineSeries("distance", "green");*/
-        /*chartAll.addLineSeries("boxes", "red");*/
-        /*chartAll.addLineSeries("temperature", "orange");*/
         chartAll.addLineSeries("humidity", "blue");
-        /*chartAll.addLineSeries("pressure", "pink");*/
 
         chartAll.setGridVisible(true);
-        chartAll.setXAxis(new XAxisProps("formattedTime"));
         chartAll.setYAxis(new YAxisProps().setUnit("%"));
 
         chartAll.setWidth(810);
@@ -230,14 +208,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         chartAll.setType(ChartType.LINE);
 
 
-        /*chartAll.addLineSeries("distance", "green");*/
-        /*chartAll.addLineSeries("boxes", "red");*/
-        /*chartAll.addLineSeries("temperature", "orange");*/
-        /*chartAll.addLineSeries("humidity", "blue");*/
         chartAll.addLineSeries("pressure", "pink");
 
         chartAll.setGridVisible(true);
-        chartAll.setXAxis(new XAxisProps("formattedTime"));
         chartAll.setYAxis(new YAxisProps().setUnit("Bar"));
 
         chartAll.setWidth(810);
@@ -255,9 +228,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         chartAll.addLineSeries("temperature", "orange");
         chartAll.addLineSeries("humidity", "blue");
         chartAll.addLineSeries("pressure", "pink");
+        chartAll.addLineSeries("height", "cyan");
 
         chartAll.setGridVisible(true);
-        chartAll.setXAxis(new XAxisProps("formattedTime"));
         chartAll.setYAxis(new YAxisProps());
 
         chartAll.setWidth(1600);
