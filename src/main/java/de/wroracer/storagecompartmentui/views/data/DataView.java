@@ -136,8 +136,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         //add(btnTest);
     }
 
-    private void updateCharts(List<Data> data) {
-        //List<Data> data = filterData(_data);
+    private void updateCharts(List<Data> _data) {
+        List<Data> data = filterData(_data);
+        dataService.smoothData(data);
         TSP tsp = getTimeSpan();
         ui.access(() -> {
             chartBoxes.setData(data);
@@ -217,7 +218,7 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
 
         chartAll.setGridVisible(true);
         chartAll.setXAxis(new XAxisProps("formattedTime"));
-        chartAll.setYAxis(new YAxisProps());
+        chartAll.setYAxis(new YAxisProps().setUnit("%"));
 
         chartAll.setWidth(810);
         chartAll.setHeight(360);
@@ -264,43 +265,6 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
-    private TSP getTimeSpan() {
-        LocalDateTime min = LocalDateTime.now();  // Startwert: Jetzt
-        switch (timeSpanValueSignal.value()) {
-            case FIVE_MINUTE:
-                min = min.minusMinutes(5);
-                break;
-            case TEN_MINUTE:
-                min = min.minusMinutes(10);
-                break;
-            case HALF_HOUR:
-                min = min.minusMinutes(30);
-                break;
-            case HOUR:
-                min = min.minusHours(1);
-                break;
-            case TWELVE_HOUR:
-                min = min.minusHours(12);
-                break;
-            case DAY:
-                min = min.minusDays(1);
-                break;
-            case WEEK:
-                min = min.minusWeeks(1);
-                break;
-            case MONTH:
-                min = min.minusMonths(1);
-                break;
-            case YEAR:
-                min = min.minusYears(1);
-                break;
-            case ALL:
-                min = null;  // Alle Daten ohne Filter
-        }
-        LocalDateTime max = LocalDateTime.now();
-        return new TSP(min, max);
-    }
-
     private List<Data> filterData(List<Data> data) {
         LocalDateTime min = LocalDateTime.now();  // Startwert: Jetzt
         switch (timeSpanValueSignal.value()) {
@@ -337,12 +301,49 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         if (min == null) {
             return data;
         }
-
+        min = min.minusMinutes(5);
         // Filter die Daten nach dem berechneten "min" Zeitstempel
         LocalDateTime finalMin = min;
         return data.stream()
                 .filter(d -> d.getTime().isAfter(finalMin))  // filtere nur die Daten, die nach "min" liegen
                 .collect(Collectors.toList());
+    }
+
+    private TSP getTimeSpan() {
+        LocalDateTime min = LocalDateTime.now();  // Startwert: Jetzt
+        switch (timeSpanValueSignal.value()) {
+            case FIVE_MINUTE:
+                min = min.minusMinutes(5);
+                break;
+            case TEN_MINUTE:
+                min = min.minusMinutes(10);
+                break;
+            case HALF_HOUR:
+                min = min.minusMinutes(30);
+                break;
+            case HOUR:
+                min = min.minusHours(1);
+                break;
+            case TWELVE_HOUR:
+                min = min.minusHours(12);
+                break;
+            case DAY:
+                min = min.minusDays(1);
+                break;
+            case WEEK:
+                min = min.minusWeeks(1);
+                break;
+            case MONTH:
+                min = min.minusMonths(1);
+                break;
+            case YEAR:
+                min = min.minusYears(1);
+                break;
+            case ALL:
+                min = null;  // Alle Daten ohne Filter
+        }
+        LocalDateTime max = LocalDateTime.now();
+        return new TSP(min, max);
     }
 
     @Override

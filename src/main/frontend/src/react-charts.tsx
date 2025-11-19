@@ -130,7 +130,19 @@ class RechartsElement extends ReactAdapterElement {
         allowDataOverflow ></XAxis>
           
           {yAxis && <YAxis {...yAxis} />}
-          {tooltip && <Tooltip />}
+          {tooltip && <Tooltip formatter={(val,lbl)=>{
+            var vf = val;
+            if (lbl == "temperature"){
+              vf = vf + " °C"
+            }else if (lbl == "humidity"){
+              vf = vf +" %"
+            }else if (lbl == "pressure"){
+              vf = vf+" Bar"
+            }else if (lbl == "distance"){
+              vf = vf+" cm"
+            }
+            return vf;
+          }} labelFormatter={(unixTime) => moment(unixTime).format('HH:mm DD.MM.YYYY')} />}
           {legend && <Legend />}
           {series && series.map((s: ChartSeries, index: number) => {
             const SeriesComp = SeriesComponentMap[s.type];

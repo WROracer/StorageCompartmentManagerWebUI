@@ -11,64 +11,47 @@ public class Data {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd_HH:mm:ss")
     private LocalDateTime time;
 
-    private String formattedTime;
-
     @JsonAlias("stored_boxes")
-    private int boxes;
-    private long temperature;
-    private long humidity;
-    private long pressure;
+    private Integer boxes;
+    private Long temperature;
+    private Long humidity;
+    private Double pressure;
 
-    private long timeMs;
     private Long distance;
 
-    public long getTimeMs() {
-        return timeMs;
-    }
 
-    public void setTimeMs(long timeMs) {
-        this.timeMs = timeMs;
-    }
-
-    public int getBoxes() {
+    public Integer getBoxes() {
         return boxes;
     }
 
-    public void setBoxes(int boxes) {
+    public void setBoxes(Integer boxes) {
         this.boxes = boxes;
     }
 
-    public long getHumidity() {
+    public Long getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(long humidity) {
+    public void setHumidity(Long humidity) {
         this.humidity = humidity;
     }
 
-    public long getPressure() {
+    public Double getPressure() {
         return pressure;
     }
 
-    public void setPressure(long pressure) {
+    public void setPressure(Double pressure) {
         this.pressure = pressure;
     }
 
-    public long getTemperature() {
+    public Long getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(long temperature) {
+    public void setTemperature(Long temperature) {
         this.temperature = temperature;
     }
 
-    public String getFormattedTime() {
-        return formattedTime;
-    }
-
-    public void setFormattedTime(String formattedTime) {
-        this.formattedTime = formattedTime;
-    }
 
     public LocalDateTime getTime() {
         return time;
@@ -84,5 +67,17 @@ public class Data {
 
     public void setDistance(Long distance) {
         this.distance = distance;
+    }
+
+    @Override
+    public String toString() {
+        return "Data{" +
+                "time=" + time +
+                ", boxes=" + boxes +
+                ", temperature=" + temperature +
+                ", humidity=" + humidity +
+                ", pressure=" + pressure +
+                ", distance=" + distance +
+                '}';
     }
 }

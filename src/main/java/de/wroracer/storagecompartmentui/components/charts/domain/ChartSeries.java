@@ -7,6 +7,7 @@ public class ChartSeries {
     private String stroke; // optional
     private String fill;   // optional
     private boolean isAnimationActive = false;
+    private boolean connectNulls = true;
 
     // Konstruktor
     public ChartSeries(ChartType type, String dataKey, String stroke, String fill) {
@@ -14,6 +15,15 @@ public class ChartSeries {
         this.dataKey = dataKey;
         this.stroke = stroke;
         this.fill = fill;
+    }
+
+    public boolean isConnectNulls() {
+        return connectNulls;
+    }
+
+    public ChartSeries setConnectNulls(boolean connectNulls) {
+        this.connectNulls = connectNulls;
+        return this;
     }
 
     public boolean isAnimationActive() {
