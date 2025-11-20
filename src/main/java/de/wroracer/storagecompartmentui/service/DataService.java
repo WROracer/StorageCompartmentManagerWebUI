@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.wroracer.storagecompartmentui.domain.Data;
 import de.wroracer.storagecompartmentui.domain.MQTTMessage;
 import de.wroracer.storagecompartmentui.events.DataReceivedEvent;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,19 +32,22 @@ public class DataService {
     private final MQTTService mqttService;
     private final ObjectMapper mapper;
     private final Path dataFolder;
+    private final String lockTopic;
     private final List<Consumer<List<Data>>> consumers = new ArrayList<>();
-    private final String SENSOR_DATA_TOPIC = "sensor/storage";
+    private final String sensorDataTopic;
     int updateCnt = 0;
     // Event-Publisher
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
-    public DataService(MQTTService mqttService, ObjectMapper mapper, @Value("${mqtt.data.saveFolder}") String dataFolderStr) {
+    public DataService(MQTTService mqttService, ObjectMapper mapper, @Value("${mqtt.data.saveFolder}") String dataFolderStr, @Value("${mqtt.topic.sensor.data}") String sensorTopic, @Value("${mqtt.topic.sensor.lock}") String lockTopic) {
         this.mqttService = mqttService;
         this.mapper = mapper;
+        this.sensorDataTopic = sensorTopic;
         dataFolder = Path.of(dataFolderStr);
+        this.lockTopic = lockTopic;
 
-        mqttService.subscribe(SENSOR_DATA_TOPIC, (topic, msg) -> {
+        mqttService.subscribe(sensorDataTopic, (topic, msg) -> {
             byte[] payload = msg.getPayload();
             // ... payload handling omitted
             String smsg = new String(payload);
@@ -59,7 +63,7 @@ public class DataService {
 
     private void onMQTTMessage(MQTTMessage msg) {
         LOGGER.debug("Got MQTT Message");
-        if (msg.getTopic().equals(SENSOR_DATA_TOPIC)) {
+        if (msg.getTopic().equals(sensorDataTopic)) {
             try {
                 Data data = mapper.readValue(msg.getMsg(), Data.class);
 
@@ -182,6 +186,12 @@ public class DataService {
         dataList.getLast().setHeight(lastValue);
     }
 
+    @PostConstruct
+    public void init() {
+        // Hier initialisierst du den Service, lädst Daten oder führst andere Start-Logik aus
+        System.out.println("MyDataService wurde initialisiert");
+    }
+
     public List<String> getAllTypes() {
         try {
             return Files.list(dataFolder).map(f -> f.getFileName().toString().replace(".json", "")).toList();
@@ -195,7 +205,7 @@ public class DataService {
     }
 
     public List<Data> getSensorData() {
-        List<Data> data = loadData(SENSOR_DATA_TOPIC);
+        List<Data> data = loadData(sensorDataTopic);
         return data;
     }
 
@@ -332,7 +342,7 @@ public class DataService {
     }
 
     public void lockDevice() {
-        mqttService.publish("ERROR", "sensor/error");
+        mqttService.publish("ERROR", lockTopic);
     }
 
     public boolean isMQQTConnected() {
