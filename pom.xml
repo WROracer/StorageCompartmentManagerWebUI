@@ -7,7 +7,7 @@
     <groupId>de.wroracer.storagecompartmentui</groupId>
     <artifactId>storagecompartmentui</artifactId>
     <name>storagecompartmentui</name>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
