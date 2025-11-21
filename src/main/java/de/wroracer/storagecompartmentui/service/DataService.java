@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @ApplicationScope
@@ -365,7 +366,7 @@ public class DataService {
             }
 
             // Wenn wir das Ende des Bereichs erreicht haben (oder die Liste endet)
-            if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getHeight())) {
+            if (i == dataList.size() - 1 || !Objects.equals(value, dataList.get(i + 1).getHeight())) {
                 // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
                 if (i - startIndex > 1) {
                     // Setze alle mittleren Werte und auch das letzte Element auf null
