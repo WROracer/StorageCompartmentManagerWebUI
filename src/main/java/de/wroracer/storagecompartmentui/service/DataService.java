@@ -57,7 +57,7 @@ public class DataService {
             try {
                 Data data = mapper.readValue(msg.getMsg(), Data.class);
 
-                double seaLevel = 1005;
+                double seaLevel = 1022;
                 double atmospheric = data.getPressure() / 100.0F;
                 double height = 44330.0 * (1.0 - Math.pow(atmospheric / seaLevel, 0.1903));
                 height = Math.round(height * 100) / 100d;
