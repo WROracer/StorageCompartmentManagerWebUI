@@ -31,6 +31,13 @@ public class MQTTService {
         publisher = tmpPublisher;
     }
 
+    /**
+     * Subscriben zu einem Topic auf dem MQTT Broker
+     *
+     * @param topic
+     * @param listener message Listener
+     * @return status 'true'=Verbunden && Subscribed; 'false'=Kein Verbindung || Fehler beim Subscriben
+     */
     public boolean subscribe(String topic, IMqttMessageListener listener) {
         if (isConnected()) {
             try {
@@ -43,6 +50,10 @@ public class MQTTService {
         return false;
     }
 
+    /**
+     *
+     * @return Verbindungs status zum MQTT Brocker
+     */
     public boolean isConnected() {
         if (publisher != null) {
             return publisher.isConnected();
@@ -50,6 +61,13 @@ public class MQTTService {
         return false;
     }
 
+    /**
+     * Publishe eine Nachricht an ein Topic
+     *
+     * @param topic
+     * @param msgS  nachricht
+     * @return status 'true'=Verbunden && Gesendet; 'false'=Kein Verbindung || Fehler beim Senden
+     */
     public boolean publish(String msgS, String topic) {
         if (isConnected()) {
             MqttMessage msg = new MqttMessage(msgS.getBytes(StandardCharsets.UTF_8));

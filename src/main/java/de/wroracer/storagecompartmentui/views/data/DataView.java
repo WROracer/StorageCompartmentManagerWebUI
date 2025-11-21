@@ -46,6 +46,7 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
     private final RechartsChart<Data> chartAll;
     private final String QUERY_TIME = "time";
     private final String QUERY_TAB = "type";
+    private final VerticalLayout layDisc;
     private ScheduledFuture<?> scheduledFuture;
 
     public DataView(DataService dataService) {
@@ -74,7 +75,7 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         chartPressure = createChartPressure();
         chartAll = createChartAll();
 
-        VerticalLayout layDisc = new VerticalLayout(new HorizontalLayout(chartBoxes, chartTemperature), new HorizontalLayout(chartHumidity, chartPressure));
+        layDisc = new VerticalLayout(new HorizontalLayout(chartBoxes, chartTemperature), new HorizontalLayout(chartHumidity, chartPressure));
 
 
         Tabs tabs = new Tabs(new Tab("Getrennt"), new Tab("Zusammen"));
@@ -130,6 +131,11 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         this.setSizeFull();
     }
 
+    /**
+     * Update alle charts mit einem Datensatz
+     *
+     * @param _data datensatz
+     */
     private void updateCharts(List<Data> _data) {
         List<Data> data = filterData(_data);
         dataService.smoothData(data);
@@ -149,6 +155,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         });
     }
 
+    /**
+     * Methode um die Query Parameter zum aktuellen anzeige stand anzupassen
+     */
     private void updateQueryParam() {
         String deepLinkingUrl = RouteConfiguration.forSessionScope()
                 .getUrl(getClass()) + "?" + QUERY_TAB + "=" + selTabValueSignal.value() + "&" + QUERY_TIME + "=" + timeSpanValueSignal.value().ordinal();
@@ -159,6 +168,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
                 .replaceState(null, deepLinkingUrl);
     }
 
+    /**
+     * @return chart für Boxes
+     */
     private RechartsChart<Data> createChartBoxes() {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
@@ -174,6 +186,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
+    /**
+     * @return Chart für Temperatur
+     */
     private RechartsChart<Data> createChartTemperature() {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
@@ -188,6 +203,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
+    /**
+     * @return Chart für Humidity
+     */
     private RechartsChart<Data> createChartHumidity() {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
@@ -203,6 +221,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
+    /**
+     * @return Chart für Pressure
+     */
     private RechartsChart<Data> createChartPressure() {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
@@ -218,6 +239,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
+    /**
+     * @return Kombiniertes Chart mit allen Werten
+     */
     private RechartsChart<Data> createChartAll() {
         RechartsChart<Data> chartAll = new RechartsChart<>();
         chartAll.setType(ChartType.LINE);
@@ -238,6 +262,10 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         return chartAll;
     }
 
+    /**
+     * @param data datensatz
+     * @return daten gefiltert auf aktuelle Zeitauswahl
+     */
     private List<Data> filterData(List<Data> data) {
         LocalDateTime min = LocalDateTime.now();  // Startwert: Jetzt
         switch (timeSpanValueSignal.value()) {
@@ -282,6 +310,10 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @return TSP (TimeSPan) ein einfache helper daten wo drinne stehet wann wir zeitlich anfangen und enden zur übergabe an die charts
+     *
+     */
     private TSP getTimeSpan() {
         LocalDateTime min = LocalDateTime.now();  // Startwert: Jetzt
         switch (timeSpanValueSignal.value()) {
@@ -326,6 +358,10 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     // Auto-Refresh starten
+
+    /**
+     * Start das automatisch "Neuladen" der daten alle 5 sekunden um eine Live ansicht zu haben
+     */
     private void startAutoRefresh() {
         // ScheduledExecutorService für wiederholte Ausführung
         var scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -335,6 +371,9 @@ public class DataView extends VerticalLayout implements BeforeEnterObserver {
         }, 0, 5, TimeUnit.SECONDS);
     }
 
+    /**
+     * Helper um alle charts mit neuen daten zu versorgen
+     */
     private void reloadData() {
         updateCharts(dataService.getSensorData());
     }

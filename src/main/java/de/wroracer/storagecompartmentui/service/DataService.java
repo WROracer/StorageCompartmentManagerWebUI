@@ -5,13 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.wroracer.storagecompartmentui.domain.Data;
 import de.wroracer.storagecompartmentui.domain.MQTTMessage;
-import de.wroracer.storagecompartmentui.events.DataReceivedEvent;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.ApplicationScope;
 
@@ -22,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 @Service
 @ApplicationScope
@@ -33,12 +28,7 @@ public class DataService {
     private final ObjectMapper mapper;
     private final Path dataFolder;
     private final String lockTopic;
-    private final List<Consumer<List<Data>>> consumers = new ArrayList<>();
     private final String sensorDataTopic;
-    int updateCnt = 0;
-    // Event-Publisher
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
 
     public DataService(MQTTService mqttService, ObjectMapper mapper, @Value("${mqtt.data.saveFolder}") String dataFolderStr, @Value("${mqtt.topic.sensor.data}") String sensorTopic, @Value("${mqtt.topic.sensor.lock}") String lockTopic) {
         this.mqttService = mqttService;
@@ -81,17 +71,18 @@ public class DataService {
 
                 dtLst.add(data);
                 saveData(dtLst, msg.getTopic());
-                /*updateCnt++;*/
-                if (updateCnt % 10 == 0) {
-                    publishDataReceived(data, dtLst);
-                    updateCnt = 0;
-                }
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    /**
+     * Funktion zum laden von gespeicherten Daten (
+     *
+     * @param type / Topic, von dem die Daten geladen werden sollen.
+     * @return Alle daten die von diesem Topic/Type Entfangen wurden
+     */
     public List<Data> loadData(String type) {
         Path file = dataFolder.resolve(type + ".json");
         if (!Files.exists(file)) {
@@ -133,11 +124,6 @@ public class DataService {
         }
     }
 
-    private void publishDataReceived(Data data, List<Data> allData) {
-        DataReceivedEvent event = new DataReceivedEvent(this, data, allData);
-        eventPublisher.publishEvent(event);
-    }
-
     private static void formatData(List<Data> data) {
         data.forEach(d -> {
             //d.setFormattedTime(d.getTime().format(DateTimeFormatter.ofPattern("hh:mm:ss dd.MM.yyyy")));
@@ -154,44 +140,10 @@ public class DataService {
     }
 
     // Glättung der "Height"-Werte (inkl. letzter Wert eines gleichen Bereichs)
-    public static void smoothHeight(List<Data> dataList) {
-        if (dataList == null || dataList.size() < 2) return;
 
-        Double fistValue = dataList.getFirst().getHeight();
-        Double lastValue = dataList.getLast().getHeight();
-        Double currentValue = null;  // Wert, den wir aktuell glätten
-        int startIndex = -1;       // Startindex des Bereichs mit gleichen Werten
-
-        for (int i = 0; i < dataList.size(); i++) {
-            Double value = dataList.get(i).getHeight();
-
-            if (currentValue == null || !currentValue.equals(value)) {
-                // Wenn wir einen neuen Wert finden, speichern wir den Start des Bereichs
-                currentValue = value;
-                startIndex = i;
-            }
-
-            // Wenn wir das Ende des Bereichs erreicht haben (oder die Liste endet)
-            if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getHeight())) {
-                // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
-                if (i - startIndex > 1) {
-                    // Setze alle mittleren Werte und auch das letzte Element auf null
-                    for (int j = startIndex + 1; j <= i; j++) {
-                        dataList.get(j).setHeight(null);  // Setze den Wert auf null
-                    }
-                }
-            }
-        }
-        dataList.getFirst().setHeight(fistValue);
-        dataList.getLast().setHeight(lastValue);
-    }
-
-    @PostConstruct
-    public void init() {
-        // Hier initialisierst du den Service, lädst Daten oder führst andere Start-Logik aus
-        System.out.println("MyDataService wurde initialisiert");
-    }
-
+    /**
+     * @return alle typen/topic die gespeichert sind
+     */
     public List<String> getAllTypes() {
         try {
             return Files.list(dataFolder).map(f -> f.getFileName().toString().replace(".json", "")).toList();
@@ -200,23 +152,36 @@ public class DataService {
         }
     }
 
-    public void onUpdate(Consumer<List<Data>> consumer) {
-        consumers.add(consumer);
-    }
-
+    /**
+     * @return Alle Daten die im Sensor Topic (via Properteis configurierbar) sind
+     */
     public List<Data> getSensorData() {
         List<Data> data = loadData(sensorDataTopic);
         return data;
     }
 
+    /**
+     * Hier werden alle Daten punkte Gesmooth, über die dafür exitierenden methoden.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
     public void smoothData(List<Data> dataList) {
         smoothBoxes(dataList);     // Glätten der "boxes"-Daten
         smoothTemperature(dataList);  // Glätten der "temperature"-Daten
         smoothHumidity(dataList);    // Glätten der "humidity"-Daten
         smoothPressure(dataList);    // Glätten der "pressure"-Daten
+        smoothHeight(dataList); // Glätten der "height"-Daten
     }
 
-    // Glättung der "boxes"-Werte
+    /**
+     * Hier werden die daten von feld boxes geglättet, für die anzeige im Chart:
+     * Das funktioniert wie folgend:
+     * Daten kommen wie folgt 1 1 1 4 4 7 7 7 7 7 8 8
+     * Dieses wird zu 1 null 1 null 1 4 4 7 null null null 7 8 8
+     * Ein wert der auf null ist wird im Chart nicht als wert punkt angezeigt. sommit ist der chart nicht überfülllt mit datenpunkten.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
     public static void smoothBoxes(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
@@ -244,7 +209,17 @@ public class DataService {
         }
     }
 
-    // Glättung der "temperature"-Werte (inkl. letzter Wert eines gleichen Bereichs)
+    // Glättung der "boxes"-Werte
+
+    /**
+     * Hier werden die daten von feld temperature geglättet, für die anzeige im Chart:
+     * Das funktioniert wie folgend:
+     * Daten kommen wie folgt 1 1 1 4 4 7 7 7 7 7 8 8
+     * Dieses wird zu 1 null 1 null null 4 null 7 null null null null 8 null
+     * Ein wert der auf null ist wird im Chart nicht als wert punkt angezeigt. sommit ist der chart nicht überfülllt mit datenpunkten.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
     public static void smoothTemperature(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
@@ -277,7 +252,17 @@ public class DataService {
         dataList.getLast().setTemperature(lastValue);
     }
 
-    // Glättung der "humidity"-Werte
+    // Glättung der "temperature"-Werte (inkl. letzter Wert eines gleichen Bereichs)
+
+    /**
+     * Hier werden die daten von feld humidity geglättet, für die anzeige im Chart:
+     * Das funktioniert wie folgend:
+     * Daten kommen wie folgt 1 1 1 4 4 7 7 7 7 7 8 8
+     * Dieses wird zu 1 null 1 null null 4 null 7 null null null null 8 null
+     * Ein wert der auf null ist wird im Chart nicht als wert punkt angezeigt. sommit ist der chart nicht überfülllt mit datenpunkten.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
     public static void smoothHumidity(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
@@ -309,7 +294,17 @@ public class DataService {
         dataList.getLast().setHumidity(lastValue);
     }
 
-    // Glättung der "pressure"-Werte
+    // Glättung der "humidity"-Werte
+
+    /**
+     * Hier werden die daten von feld pressure geglättet, für die anzeige im Chart:
+     * Das funktioniert wie folgend:
+     * Daten kommen wie folgt 1 1 1 4 4 7 7 7 7 7 8 8
+     * Dieses wird zu 1 null 1 null null 4 null 7 null null null null 8 null
+     * Ein wert der auf null ist wird im Chart nicht als wert punkt angezeigt. sommit ist der chart nicht überfülllt mit datenpunkten.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
     public static void smoothPressure(List<Data> dataList) {
         if (dataList == null || dataList.size() < 2) return;
 
@@ -341,10 +336,59 @@ public class DataService {
         dataList.getLast().setPressure(lastValue);
     }
 
+    // Glättung der "pressure"-Werte
+
+    /**
+     * Hier werden die daten von feld height geglättet, für die anzeige im Chart:
+     * Das funktioniert wie folgend:
+     * Daten kommen wie folgt 1 1 1 4 4 7 7 7 7 7 8 8
+     * Dieses wird zu 1 null 1 null null 4 null 7 null null null null 8 null
+     * Ein wert der auf null ist wird im Chart nicht als wert punkt angezeigt. sommit ist der chart nicht überfülllt mit datenpunkten.
+     *
+     * @param dataList Liste mit daten über denn gesmooth wird
+     */
+    public static void smoothHeight(List<Data> dataList) {
+        if (dataList == null || dataList.size() < 2) return;
+
+        Double fistValue = dataList.getFirst().getHeight();
+        Double lastValue = dataList.getLast().getHeight();
+        Double currentValue = null;  // Wert, den wir aktuell glätten
+        int startIndex = -1;       // Startindex des Bereichs mit gleichen Werten
+
+        for (int i = 0; i < dataList.size(); i++) {
+            Double value = dataList.get(i).getHeight();
+
+            if (currentValue == null || !currentValue.equals(value)) {
+                // Wenn wir einen neuen Wert finden, speichern wir den Start des Bereichs
+                currentValue = value;
+                startIndex = i;
+            }
+
+            // Wenn wir das Ende des Bereichs erreicht haben (oder die Liste endet)
+            if (i == dataList.size() - 1 || !value.equals(dataList.get(i + 1).getHeight())) {
+                // Wenn der Bereich größer als 2 ist, setze die mittleren Werte auf null
+                if (i - startIndex > 1) {
+                    // Setze alle mittleren Werte und auch das letzte Element auf null
+                    for (int j = startIndex + 1; j <= i; j++) {
+                        dataList.get(j).setHeight(null);  // Setze den Wert auf null
+                    }
+                }
+            }
+        }
+        dataList.getFirst().setHeight(fistValue);
+        dataList.getLast().setHeight(lastValue);
+    }
+
+    /**
+     * Bei ausführung wird via MQTT an den Controller gesendet das er sich sperren soll.
+     */
     public void lockDevice() {
         mqttService.publish("ERROR", lockTopic);
     }
 
+    /**
+     * @return Status zur Connection mit MQTT;
+     */
     public boolean isMQQTConnected() {
         return mqttService.isConnected();
     }
