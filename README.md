@@ -24,7 +24,7 @@ Vaadin-Komponente:
 Starten Sie die Jar-Datei mit folgenden JVM-Argumenten:
 
 ```bash
-java -DMQQTT_URL=127.0.0.1 -jar storagecompartmentui-1.0.0.jar
+java -DMQQTT_URL=127.0.0.1 -jar storagecompartmentui-1.0.1.jar
 ```
 
 ### Verfügbare Parameter
